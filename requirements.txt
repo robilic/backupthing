@@ -1,0 +1,6 @@
+bottle==0.12.16
+humanfriendly==4.17
+Paste==3.0.6
+pathlib==1.0.1
+pyreadline==2.1
+six==1.12.0
