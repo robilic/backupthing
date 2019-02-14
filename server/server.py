@@ -18,9 +18,6 @@ KB = 1024
 MB = 1024 * KB
 BLOCK_SIZE = 4 * MB
 
-#shouldn't need this anymore
-#bottle.BaseRequest.MEMFILE_MAX = 4 * MB
-
 #
 # Database Stuff
 #
