@@ -1,0 +1,8 @@
+.ftable {font-size:12px;color:#333333;font-family:sans-serif;
+  width:100%;border-width: 1px;border-color: #729ea5;border-collapse: collapse;}
+.ftable th {font-size:12px;background-color:#acc8cc;border-width: 1px;padding: 8px;
+  border-style: solid;border-color: #729ea5;text-align:left;}
+.ftable tr {background-color:#d4e3e5;}
+.ftable td {font-size:12px;border-width: 1px;padding: 8px;border-style: solid;
+  border-color: #729ea5;}
+.ftable tr:hover {background-color:#ffffff;}
