@@ -8,6 +8,7 @@ import random
 import datetime
 import sqlite3
 import glob
+import base64
 
 DB_FILE_EXTENSION = '.db'
 CATALOG_BASE_PATH = 'F:\\BackupThing4\\CATALOGS'
@@ -18,50 +19,53 @@ KB = 1024
 MB = 1024 * KB
 BLOCK_SIZE = 4 * MB
 
+#shouldn't need this anymore
+#bottle.BaseRequest.MEMFILE_MAX = 4 * MB
+
 #
 # Database Stuff
 #
 
 def get_database_file_path(client_id):
-    # return X:\backups\catalogs\hostname\ for (hostname)
-    return os.path.join(CATALOG_BASE_PATH, client_id)
+	# return X:\backups\catalogs\hostname\ for (hostname)
+	return os.path.join(CATALOG_BASE_PATH, client_id)
 
 def get_database_file_name(catalog_id):
-    return catalog_id + DB_FILE_EXTENSION
+	return catalog_id + DB_FILE_EXTENSION
 
 # create and return a SQLite connection object
 def open_client_catalog(client_id, catalog_id):
-    db_dir = get_database_file_path(client_id)
-    db_file_name = get_database_file_name(catalog_id)
-    db_full_file_path = os.path.join(db_dir, db_file_name)
-    if not os.path.exists(db_dir):
-        print("Need to create the directory to hold catalog " + db_dir)
-        os.makedirs(db_dir)
+	db_dir = get_database_file_path(client_id)
+	db_file_name = get_database_file_name(catalog_id)
+	db_full_file_path = os.path.join(db_dir, db_file_name)
+	if not os.path.exists(db_dir):
+		print("Need to create the directory to hold catalog " + db_dir)
+		os.makedirs(db_dir)
 
-    db = sqlite3.connect(db_full_file_path)
+	db = sqlite3.connect(db_full_file_path)
 
-    db.execute('''
-	   CREATE TABLE IF NOT EXISTS catalog (
-		   id INTEGER PRIMARY KEY,
-		   filename TEXT,
-		   ctime REAL,
-		   mtime REAL,
-		   size INT,
-		   blocklist_id INT
+	db.execute('''
+			CREATE TABLE IF NOT EXISTS catalog (
+			id INTEGER PRIMARY KEY,
+			filename TEXT,
+			ctime REAL,
+			mtime REAL,
+			size INT,
+			blocklist_id INT
 		)
-        ''')
-    db.commit()
+		''')
+	db.commit()
 
-    db.execute('''
-	   CREATE TABLE IF NOT EXISTS blocklist (
-	   		id INTEGER PRIMARY KEY,
+	db.execute('''
+		CREATE TABLE IF NOT EXISTS blocklist (
+				id INTEGER PRIMARY KEY,
 			blocklist_id INT,
 			series INT,
 			md5 TEXT
 		)
-        ''')
-    db.commit()
-    return db
+		''')
+	db.commit()
+	return db
 
 # close the SQLite Connection object
 def close_client_catalog(db):
@@ -191,15 +195,58 @@ def commit():
 	existing_blocks = []
 	block_count = 1
 
-	for block in request.json['commit']:
-		if does_file_hash_exist(block['hash']):
-			existing_blocks.append(block['id'])
-		else:
-			needed_blocks.update({ block_count: block['id'] })
-			block_count = block_count + 1
+	# debugging
+	print('DEBUG:')
+	print(request.body.getvalue().decode('utf-8'))
 
-	#print('Existing blocks: ', existing_blocks)
-	#print('Needed blocks:   ', needed_blocks)
+	# zero-byte file, just save the entry
+	if request.json['fileinfo']['size'] == 0:
+		client_id = request.json['client']
+		catalog_id = request.json['catalog']
+		fi = request.json['fileinfo']
+
+		catalog_db = open_client_catalog(client_id, catalog_id)
+		cur = catalog_db.cursor()
+
+		cur.execute('''
+			SELECT * from catalog WHERE filename = :filename
+		''',
+			{ 'filename': fi['filename'] }
+		)
+		rst = cur.fetchone()
+		if rst is not None:
+			print('file already exists in catalog')
+			return 'OK'
+		# write this file info to catalog
+		cur.execute('''
+				INSERT INTO catalog(filename, ctime, mtime, size, blocklist_id)
+				VALUES(:filename, :ctime, :mtime, :size, :blocklist_id)
+			''',
+			{ 'filename': fi['filename'],
+			  'ctime': fi['ctime'],
+			  'mtime': fi['mtime'],
+			  'size': fi['size'],
+			  'blocklist_id': 0 }
+			)
+		catalog_db.commit()
+
+		close_client_catalog(catalog_db)
+		return 'OK'
+
+	try:
+		for block in request.json['commit']:
+			if does_file_hash_exist(block['hash']):
+				existing_blocks.append(block['id'])
+			else:
+				needed_blocks.update({ block_count: block['id'] })
+				block_count = block_count + 1
+	except Exception as e:
+		print("Error trying to /commit/: " + str(e))
+		return "REQUEST_ERROR"
+
+	print(request.json)
+	print('Existing blocks: ', existing_blocks)
+	print('Needed blocks:   ', needed_blocks)
 
 	if len(needed_blocks) > 0:
 		return needed_blocks
@@ -269,18 +316,54 @@ def commit():
 # receive single block function
 @post('/store/')
 def store():
-	submitted_hash = request.forms.get('hash')
-	block_data_file_obj = request.files.get('file')
+	base64_file = False
+
+	if 'hash' in request.forms:
+		try:
+			submitted_hash = request.forms.get('hash').lower() # someone might send us an uppercase hash
+		except Exception as e:
+			print("ERROR - MISSING HASH")
+			return "ERROR"
+	else:
+		print("ERROR - MISSING HASH")
+		return "ERROR"
+
+	print("Submitted hash:", submitted_hash)
+
 	temp_file_name = os.path.join(FILES_BASE_PATH, str(random.randint(10000,99999)) + str(random.randint(100000,999999)))
 	if os.path.exists(temp_file_name):
 		print('temp_file_name: ' + temp_file_name + ' already exists, weird.')
 		exit()
-	block_data_file_obj.save(temp_file_name)
-	uploaded_file_hash = md5_hash_file_upload(block_data_file_obj.file)
 
+	try:
+		block_data_file_obj = request.files.get('file')
+	except Exception as e:
+		print(e)
+		print("ERROR - INVALID OR MISSING FILE")
+		return "ERROR"
+
+	if 'Content-Transfer-Encoding' in request.files.get('file').headers:
+		if request.files.get('file').headers['Content-Transfer-Encoding'] == 'base64':
+			print('This file is base64-encoded')
+			base64_file = True
+
+	if base64_file:
+		h = hashlib.md5()
+		b64DecodedData = base64.decodebytes(block_data_file_obj.file.read())
+		h.update(b64DecodedData)
+		uploaded_file_hash = h.hexdigest()
+	else:
+		block_data_file_obj.save(temp_file_name)
+		uploaded_file_hash = md5_hash_file_upload(block_data_file_obj.file)
+
+	if base64_file:
+		new_file = open(temp_file_name, 'wb')
+		new_file.write(b64DecodedData)
+		new_file.close()
+
+	#print("File size: " + os.fstat(temp_file_name).st_size)
 	#print('submitted_hash  :', submitted_hash)
 	#print('block_hash      :', uploaded_file_hash)
-
 	# if our hash matches what we were sent, store the block
 	if uploaded_file_hash == submitted_hash:
 		file_name = file_path_from_hash(uploaded_file_hash)
@@ -296,9 +379,6 @@ def store():
 			#print('Making directory ' + file_dir)
 			os.makedirs(file_dir)
 
-		#print('store at: ', file_name)
-		#print('Storing block.\nHash provided: ' + submitted_hash + '\nblock_hash   : ' + uploaded_file_hash)
-
 		try:
 			os.rename(temp_file_name, file_name)
 			print('temp_file_name = ' + temp_file_name + ' file_name = ' + file_name)
@@ -309,6 +389,7 @@ def store():
 
 		print('made it through try/except')
 	else:
+		print("ERROR - hashes do not match.\nUploaded file: " + uploaded_file_hash + "\nSubmitted hash: " + submitted_hash)
 		return 'ERROR - hashes do not match'
 
 
