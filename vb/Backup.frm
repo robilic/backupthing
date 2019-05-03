@@ -1,19 +1,28 @@
 VERSION 5.00
 Begin VB.Form Form1 
-   Caption         =   "Form1"
-   ClientHeight    =   5115
+   Caption         =   "SCE Backup"
+   ClientHeight    =   4575
    ClientLeft      =   120
    ClientTop       =   465
    ClientWidth     =   7095
    LinkTopic       =   "Form1"
-   ScaleHeight     =   5115
+   ScaleHeight     =   4575
    ScaleWidth      =   7095
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton btnOptions 
+      Caption         =   "Options"
+      Height          =   375
+      Left            =   1560
+      TabIndex        =   5
+      Top             =   4080
+      Width           =   1095
+   End
    Begin VB.TextBox txtCurrentfile 
       Height          =   855
       Left            =   240
+      MultiLine       =   -1  'True
       TabIndex        =   4
-      Top             =   2160
+      Top             =   3120
       Width           =   6615
    End
    Begin VB.CommandButton btnStart 
@@ -21,26 +30,26 @@ Begin VB.Form Form1
       Height          =   375
       Left            =   240
       TabIndex        =   3
-      Top             =   3120
+      Top             =   4080
       Width           =   1095
    End
    Begin VB.DirListBox lstStartIn 
-      Height          =   1665
+      Height          =   2790
       Left            =   1800
       TabIndex        =   1
       Top             =   0
-      Width           =   3735
+      Width           =   5055
    End
    Begin VB.Label lblCurrentFile 
       Caption         =   "Current File:"
       Height          =   255
       Left            =   240
       TabIndex        =   2
-      Top             =   1800
+      Top             =   2760
       Width           =   975
    End
    Begin VB.Label lblDirectory 
-      Caption         =   "Start in:"
+      Caption         =   "Folder to backup:"
       Height          =   495
       Left            =   360
       TabIndex        =   0
@@ -59,9 +68,26 @@ Attribute VB_Exposed = False
 Dim FSys As New Scripting.FileSystemObject
 Public hashobj As New MD5Hash
 
-' This should be configurable in a menu or .ini file
-Dim BackupServer As String
+' These should be configurable in a menu or .ini file
+Public client_name As String
+Public catalog_name As String
+Public backup_server As String
+
 Private Declare Function SafeArrayGetDim Lib "oleaut32.dll" (psa() As Any) As Long
+
+Private Sub btnOptions_Click()
+    Dim OptionsForm As New Options
+    Options.Show
+End Sub
+
+'
+'
+Private Sub Form_Load()
+    client_name = "USERPC-TEST"
+    catalog_name = "FIRST_BACKUP"
+    backup_server = "http://127.0.0.1:8080"
+    Debug.Print ("InitProgram()");
+End Sub
 
 '
 '
@@ -98,7 +124,9 @@ Sub ScanFolder(FolderSpec As String)
     Next
     
     For Each fileItem In AllFiles
-        Debug.Print "Current File: " & fileItem.Path & ", " & fileItem.size & " bytes"
+        'Debug.Print "Current File: " & fileItem.Path & ", " & fileItem.size & " bytes"
+        txtCurrentfile.Text = fileItem.Path & ", " & fileItem.size & " bytes"
+        Me.Refresh
         arr = CommitFile(fileItem.Path)
         ' check if the list of needed blocks is empty
         If SafeArrayGetDim(arr) > 0 Then
@@ -212,11 +240,6 @@ Function CommitFile(FileName As String) As Integer()
     Dim fso As New FileSystemObject
     Dim f As File
     Dim mtime, ctime, size As Long
-    Dim client_name As String
-    Dim catalog_name As String
-    client_name = "USERPC-TEST"
-    catalog_name = "FIRST_BACKUP"
-    BackupServer = "http://127.0.0.1:8080"
 
     ' Collect file info
     Set f = fso.GetFile(FileName)
@@ -235,7 +258,7 @@ Function CommitFile(FileName As String) As Integer()
     dJSObject.Add "catalog", catalog_name
     dJSObject.Add "fileinfo", dFileInfo
     dJSObject.Add "client", client_name
-    dJSObject.Add "commit", generateBlocklist(FileName)
+    dJSObject.Add "commit", GenerateBlocklist(FileName)
     Debug.Print "Dict: " & Dict2JSON(dJSObject)
     jsonString = Dict2JSON(dJSObject)
 
@@ -243,7 +266,7 @@ Function CommitFile(FileName As String) As Integer()
     Dim http As Object
     Set http = CreateObject("winhttp.winhttprequest.5.1")
     'http.SetProxy 2, "squid.saginawcontrol.com:3128"
-    http.Open "POST", BackupServer & "/commit/", False
+    http.Open "POST", backup_server & "/commit/", False
     http.SetRequestHeader "Content-Type", "application/json"
     http.Send jsonString
     
@@ -319,11 +342,11 @@ Function SendBlock(ByRef BlockData() As Byte) As String
     Dim PostBody As String
     
     ' post /store/ data = hash:hex, files = file:data:BlockData
-    BackupServer = "http://127.0.0.1:8080"
+    backup_server = "http://127.0.0.1:8080"
     Dim http As Object
     Set http = CreateObject("winhttp.winhttprequest.5.1")
     'http.SetProxy 2, "squid.saginawcontrol.com:3128"
-    http.Open "POST", BackupServer & "/store/", False
+    http.Open "POST", backup_server & "/store/", False
     http.SetRequestHeader "Content-Type", "multipart/form-data" & ";boundary=" & sBoundary
     
     ' build the multipart/form-data... by hand :~(
@@ -359,7 +382,7 @@ End Function
 ' Return an array of dictionaries
 ' { "hash": xyxyxyxyxyxy, "id": i }
 '
-Function generateBlocklist(InFileName As String) As Variant
+Function GenerateBlocklist(InFileName As String) As Variant
     
     Dim InFileHandle As Integer  ' File handle
     Dim FileSize As Long         ' Length of the file
@@ -427,7 +450,7 @@ Function generateBlocklist(InFileName As String) As Variant
     End If
     
     Close #InFileHandle
-    generateBlocklist = BlockList
+    GenerateBlocklist = BlockList
 
 End Function
 
@@ -564,6 +587,5 @@ Private Function EncodeBase64(bytes) As String
   EL.NodeTypedValue = bytes
   EncodeBase64 = EL.Text
 End Function
-
 
 
