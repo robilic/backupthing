@@ -11,16 +11,13 @@ import glob
 import base64
 
 DB_FILE_EXTENSION = '.db'
-CATALOG_BASE_PATH = 'F:\\BackupThing4\\CATALOGS'
-FILES_BASE_PATH = 'F:\\BackupThing4\\FILES'
+CATALOG_BASE_PATH = 'D:\\Backups\\CATALOGS'
+FILES_BASE_PATH = 'D:\\Backups\\FILES'
 FILES_DIR_LAYERS = 4
 
 KB = 1024
 MB = 1024 * KB
 BLOCK_SIZE = 4 * MB
-
-#shouldn't need this anymore
-#bottle.BaseRequest.MEMFILE_MAX = 4 * MB
 
 #
 # Database Stuff
@@ -70,8 +67,6 @@ def open_client_catalog(client_id, catalog_id):
 # close the SQLite Connection object
 def close_client_catalog(db):
     db.close()
-
-
 
 # split a hash up into dir+filename:
 #   (abcdef12345, 4) becomes ('\\a\\b\\c\\d\\', 'ef12345')
@@ -392,5 +387,5 @@ def store():
 		print("ERROR - hashes do not match.\nUploaded file: " + uploaded_file_hash + "\nSubmitted hash: " + submitted_hash)
 		return 'ERROR - hashes do not match'
 
-
+# use the paste webserver as the basic one will cause strange errors
 run(server='paste', host='0.0.0.0', port=8080, reloader=True, debug=True)
