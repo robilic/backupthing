@@ -87,7 +87,7 @@ Private Declare Function WritePrivateProfileString Lib "kernel32" Alias _
     "WritePrivateProfileStringA" (ByVal lpApplicationName _
     As String, ByVal lpKeyName As Any, ByVal lpString As Any, _
     ByVal lpFileName As String) As Long
-
+    
 Public Function sGetINI(sINIFile As String, sSection As String, sKey _
     As String, sDefault As String) As String
     Dim sTemp As String * 256
@@ -162,16 +162,22 @@ Sub ScanFolder(FolderSpec As String)
     Set thisFolder = FSys.GetFolder(FolderSpec)
     Set sFolders = thisFolder.SubFolders
     Set AllFiles = thisFolder.Files
-    
+
     For Each folderItem In sFolders
-        ' Empty folders need to be saved similar to zero-byte files
+        ' TODO: Empty folders need to be saved similar to zero-byte files
         
-        Debug.Print "Folder : " & folderItem.Path
-        ScanFolder (folderItem.Path)
+        ' Hack around permissions issues in the Recycle Bin
+        If InStr(folderItem.Path, "$Recycle.Bin") > 0 Then
+            Debug.Print "Error accessing " & folderItem.Path
+        Else
+            ScanFolder (folderItem.Path)
+        End If
     Next
     
     For Each fileItem In AllFiles
-        'Debug.Print "Current File: " & fileItem.Path & ", " & fileItem.size & " bytes"
+        ' TODO: Check for file/paths that we do NOT want to backup
+        ' TEMP files, hidden dirs, etc
+        
         txtCurrentfile.Text = fileItem.Path & ", " & fileItem.size & " bytes"
         Me.Refresh
         arr = CommitFile(fileItem.Path)
