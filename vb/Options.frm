@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin VB.Form Options 
    Caption         =   "Options"
-   ClientHeight    =   3000
+   ClientHeight    =   3480
    ClientLeft      =   120
    ClientTop       =   465
    ClientWidth     =   5625
@@ -15,7 +15,7 @@ Begin VB.Form Options
       Strikethrough   =   0   'False
    EndProperty
    LinkTopic       =   "Form2"
-   ScaleHeight     =   3000
+   ScaleHeight     =   3480
    ScaleWidth      =   5625
    StartUpPosition =   3  'Windows Default
    Begin VB.TextBox TxtCatalog 
@@ -48,7 +48,7 @@ Begin VB.Form Options
       Height          =   375
       Left            =   4440
       TabIndex        =   3
-      Top             =   2520
+      Top             =   3000
       Width           =   975
    End
    Begin VB.CommandButton BtnOptionsOk 
@@ -65,7 +65,7 @@ Begin VB.Form Options
       Height          =   375
       Left            =   240
       TabIndex        =   2
-      Top             =   2520
+      Top             =   3000
       Width           =   975
    End
    Begin VB.TextBox TxtClient 
@@ -99,6 +99,14 @@ Begin VB.Form Options
       TabIndex        =   0
       Top             =   360
       Width           =   4095
+   End
+   Begin VB.Label Label1 
+      Caption         =   "Click OK to save these settings to backup.ini"
+      Height          =   375
+      Left            =   840
+      TabIndex        =   8
+      Top             =   2400
+      Width           =   4575
    End
    Begin VB.Label LblCatalog 
       Alignment       =   1  'Right Justify
@@ -163,6 +171,17 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Private Sub BtnOptionsCancel_Click()
+    Unload Me
+End Sub
+
+Private Sub BtnOptionsOk_Click()
+    Form1.writeINI Form1.sINIFile, "Settings", "ClientName", TxtClient.Text
+    Form1.writeINI Form1.sINIFile, "Settings", "CatalogName", TxtCatalog.Text
+    Form1.writeINI Form1.sINIFile, "Settings", "BackupServer", TxtServer.Text
+    Unload Me
+End Sub
+
 '
 '
 Private Sub Form_Load()
