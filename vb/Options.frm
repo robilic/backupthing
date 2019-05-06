@@ -100,6 +100,23 @@ Begin VB.Form Options
       Top             =   360
       Width           =   4095
    End
+   Begin VB.Label Label2 
+      Caption         =   "IP or name + port, eg: SERVERNAME:8080"
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   255
+      Left            =   1440
+      TabIndex        =   9
+      Top             =   720
+      Width           =   3975
+   End
    Begin VB.Label Label1 
       Caption         =   "Click OK to save these settings to backup.ini"
       Height          =   375

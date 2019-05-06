@@ -313,7 +313,7 @@ Function CommitFile(FileName As String) As Integer()
     Dim http As Object
     Set http = CreateObject("winhttp.winhttprequest.5.1")
     'http.SetProxy 2, "squid.saginawcontrol.com:3128"
-    http.Open "POST", backup_server & "/commit/", False
+    http.Open "POST", "http://" & backup_server & "/commit/", False
     http.SetRequestHeader "Content-Type", "application/json"
     http.Send jsonString
     
@@ -389,11 +389,10 @@ Function SendBlock(ByRef BlockData() As Byte) As String
     Dim PostBody As String
     
     ' post /store/ data = hash:hex, files = file:data:BlockData
-    backup_server = "http://127.0.0.1:8080"
     Dim http As Object
     Set http = CreateObject("winhttp.winhttprequest.5.1")
     'http.SetProxy 2, "squid.saginawcontrol.com:3128"
-    http.Open "POST", backup_server & "/store/", False
+    http.Open "POST", "http://" & backup_server & "/store/", False
     http.SetRequestHeader "Content-Type", "multipart/form-data" & ";boundary=" & sBoundary
     
     ' build the multipart/form-data... by hand :~(
