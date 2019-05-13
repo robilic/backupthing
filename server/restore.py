@@ -1,11 +1,7 @@
 # from pathlib import Path
 import os
-# import hashlib
-# import random
-# import datetime
 import sqlite3
-# import glob
-# import base64
+import re
 
 DB_FILE_EXTENSION = '.db'
 CATALOG_BASE_PATH = 'D:\\Backups\\CATALOGS'
@@ -16,6 +12,11 @@ KB = 1024
 MB = 1024 * KB
 BLOCK_SIZE = 4 * MB
 
+def are_we_running_windows():
+    if os.name == 'nt':
+        return True
+    else:
+        return False
 #
 # Database Stuff
 #
@@ -134,12 +135,32 @@ def restore_file(filename, client, catalog, restore_path):
         for i, h in hashes:
             print("Index: {}, Hash: {}, File: {}".format(i,h, file_path_from_hash(h)))
 
-        # open new file for writing
-        out_file_name = filename.replace('\\', '-')
-        out_file_name = out_file_name.replace('C:', '')
-        print(restore_path)
-        print(out_file_name)
-        out_file = open(os.path.join(restore_path, out_file_name), 'wb')
+        # chop off the drive letter if it exists
+        if re.search('^[A-Za-z]:', filename):
+            # this is a windows path
+            print("Windows Path!")
+            filename = filename[3:] # remove drive letter
+            split_path = filename.split('\\')
+        else:
+            print("Not a windows path!")
+            split_path = filename.split('/')
+            # this is a linux path
+
+        out_file_name = split_path[-1] # get the file name
+        del split_path[-1] # remove it from the path
+        full_restore_path = os.path.join(restore_path, *split_path) # re-assemble the path
+        
+        print("Passed filename: " + filename)
+        print("Path chunks: ")
+        print(split_path)
+        print("Restore path: " + restore_path)
+        print("Full restore path: " + full_restore_path)
+        print("Output file name: " + out_file_name)
+
+        if not os.path.exists(full_restore_path):
+            os.makedirs(full_restore_path) # create the new path
+
+        out_file = open(os.path.join(full_restore_path, out_file_name), 'wb')
 
         print("Writing file to {}".format(out_file_name,))
         for i, h in hashes:
@@ -171,9 +192,9 @@ def restore_folder(foldername, client, catalog, restore_path):
 
 client_id = "USER-PC-TEST"
 catalog_id = "SECOND-BACKUP"
-file_name = 'C:\\Users\\Robert.Vasquez\\Documents\\Books\\CompSci\\rest_in_practice.pdf'
+restore_file_name = 'C:\\Users\\Robert.Vasquez\\Documents\\Books\\CompSci\\rest_in_practice.pdf'
 restore_path = 'D:\\Restores'
 
-#restore_file(file_name, client_id, catalog_id, restore_path)
+#restore_file(restore_file_name, client_id, catalog_id, restore_path)
 
 restore_folder('Acrobat Reader DC', client_id, catalog_id, restore_path)
