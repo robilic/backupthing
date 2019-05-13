@@ -191,8 +191,8 @@ def commit():
 	block_count = 1
 
 	# debugging
-	print('DEBUG:')
-	print(request.body.getvalue().decode('utf-8'))
+	#print('DEBUG:')
+	#print(request.body.getvalue().decode('utf-8'))
 
 	# zero-byte file, just save the entry
 	if request.json['fileinfo']['size'] == 0:
@@ -239,9 +239,10 @@ def commit():
 		print("Error trying to /commit/: " + str(e))
 		return "REQUEST_ERROR"
 
-	print(request.json)
-	print('Existing blocks: ', existing_blocks)
-	print('Needed blocks:   ', needed_blocks)
+# Debugging
+#	print(request.json)
+#	print('Existing blocks: ', existing_blocks)
+#	print('Needed blocks:   ', needed_blocks)
 
 	if len(needed_blocks) > 0:
 		return needed_blocks
