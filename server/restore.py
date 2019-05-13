@@ -83,13 +83,10 @@ def file_path_from_hash(hash):
 
 # check if a hash exists in our file storage
 def does_file_hash_exist(file_hash):
-	file_name = os.path.join(file_path_from_hash(file_hash))
-	#print("Checking " + file_name)
-	if os.path.isfile(file_name):
-		#print('File ', file_path_from_hash(file_hash), 'DOES exist!')
+	name = os.path.join(file_path_from_hash(file_hash))
+	if os.path.isfile(name):
 		return True
 	else:
-		#print('File ', file_path_from_hash(file_hash), 'DOES NOT exist!')
 		return False
 
 def md5_hash_file_upload(fobj):
@@ -108,7 +105,7 @@ def md5_hash_file_upload(fobj):
 def get_blocklist_id(filename, client, catalog):
     db = open_client_catalog(client_id, catalog_id)
     cursor = db.cursor()
-    cursor.execute(''' SELECT blocklist_id FROM catalog WHERE filename = ? ''', (file_name,))
+    cursor.execute(''' SELECT blocklist_id FROM catalog WHERE filename = ? ''', (filename,))
     blocklist_id = cursor.fetchone()
     if blocklist_id is None:
         return False
@@ -125,7 +122,7 @@ def get_hashes_for_block(blockid):
     return hashes
 
 def restore_file(filename, client, catalog, restore_path):
-    id = get_blocklist_id(file_name, client_id, catalog_id)
+    id = get_blocklist_id(filename, client_id, catalog_id)
     if id is False:
         print("File not found: {}".format(filename,))
         return False
@@ -156,7 +153,20 @@ def restore_file(filename, client, catalog, restore_path):
 
         out_file.close()
         # close file
-        
+
+def restore_folder(foldername, client, catalog, restore_path):
+    # restore a whole folder
+    # pass something like: 'C:\Users\JoeSmith\Documents' to this function
+    db = open_client_catalog(client_id, catalog_id)
+    cursor = db.cursor()
+    cursor.execute(''' SELECT blocklist_id, filename FROM catalog WHERE filename LIKE ? ''', ('%' + foldername + '%',))
+    file_targets = cursor.fetchall()
+    close_client_catalog(db)
+    for i, f in file_targets:
+        print("ID: {}, File: {}".format(i,f))
+        restore_file(f, client, catalog, restore_path)
+    return True
+
 
 
 client_id = "USER-PC-TEST"
@@ -164,4 +174,6 @@ catalog_id = "SECOND-BACKUP"
 file_name = 'C:\\Users\\Robert.Vasquez\\Documents\\Books\\CompSci\\rest_in_practice.pdf'
 restore_path = 'D:\\Restores'
 
-restore_file(file_name, client_id, catalog_id, restore_path)
+#restore_file(file_name, client_id, catalog_id, restore_path)
+
+restore_folder('Acrobat Reader DC', client_id, catalog_id, restore_path)
