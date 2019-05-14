@@ -158,6 +158,7 @@ Sub ScanFolder(FolderSpec As String)
     Dim AllFiles As Files
     Dim FilePath As String
     Dim arr() As Integer
+    Dim RetVal As Double
     
     Set thisFolder = FSys.GetFolder(FolderSpec)
     Set sFolders = thisFolder.SubFolders
@@ -179,7 +180,7 @@ Sub ScanFolder(FolderSpec As String)
         ' TEMP files, hidden dirs, etc
         
         txtCurrentfile.Text = fileItem.Path & ", " & fileItem.size & " bytes"
-        Me.Refresh
+        Let RetVal = DoEvents()
         arr = CommitFile(fileItem.Path)
         ' check if the list of needed blocks is empty
         If SafeArrayGetDim(arr) > 0 Then
