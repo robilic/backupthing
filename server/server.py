@@ -324,7 +324,7 @@ def store():
 		print("ERROR - MISSING HASH")
 		return "ERROR"
 
-	print("Submitted hash:", submitted_hash)
+	#print("Submitted hash:", submitted_hash)
 
 	temp_file_name = os.path.join(FILES_BASE_PATH, str(random.randint(10000,99999)) + str(random.randint(100000,999999)))
 	if os.path.exists(temp_file_name):
@@ -340,7 +340,6 @@ def store():
 
 	if 'Content-Transfer-Encoding' in request.files.get('file').headers:
 		if request.files.get('file').headers['Content-Transfer-Encoding'] == 'base64':
-			print('This file is base64-encoded')
 			base64_file = True
 
 	if base64_file:

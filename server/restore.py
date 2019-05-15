@@ -125,7 +125,7 @@ def get_hashes_for_block(blockid):
 def restore_file(filename, client, catalog, restore_path):
     id = get_blocklist_id(filename, client_id, catalog_id)
     if id is False:
-        print("File not found: {}".format(filename,))
+        print("File '{}' not found.".format(filename,))
         return False
     else:
         print("Blocklist ID: " + str(id))
@@ -138,11 +138,9 @@ def restore_file(filename, client, catalog, restore_path):
         # chop off the drive letter if it exists
         if re.search('^[A-Za-z]:', filename):
             # this is a windows path
-            print("Windows Path!")
             filename = filename[3:] # remove drive letter
             split_path = filename.split('\\')
         else:
-            print("Not a windows path!")
             split_path = filename.split('/')
             # this is a linux path
 
@@ -150,19 +148,19 @@ def restore_file(filename, client, catalog, restore_path):
         del split_path[-1] # remove it from the path
         full_restore_path = os.path.join(restore_path, *split_path) # re-assemble the path
         
-        print("Passed filename: " + filename)
-        print("Path chunks: ")
-        print(split_path)
-        print("Restore path: " + restore_path)
-        print("Full restore path: " + full_restore_path)
-        print("Output file name: " + out_file_name)
+#        print("Passed filename: " + filename)
+#        print("Path chunks: ")
+#        print(split_path)
+#        print("Restore path: " + restore_path)
+#        print("Full restore path: " + full_restore_path)
+#        print("Output file name: " + out_file_name)
 
         if not os.path.exists(full_restore_path):
             os.makedirs(full_restore_path) # create the new path
 
         out_file = open(os.path.join(full_restore_path, out_file_name), 'wb')
 
-        print("Writing file to {}".format(out_file_name,))
+        print("Writing file to '{}'".format(out_file_name,))
         for i, h in hashes:
             print('.', end='')
             # open chunk
@@ -182,19 +180,25 @@ def restore_folder(foldername, client, catalog, restore_path):
     cursor = db.cursor()
     cursor.execute(''' SELECT blocklist_id, filename FROM catalog WHERE filename LIKE ? ''', ('%' + foldername + '%',))
     file_targets = cursor.fetchall()
+    print("Rowcount = " + str(cursor.rowcount))
+#    if cursor.rowcount < 1:
+#        print("Folder '{}' not found".format(foldername,))
+#        return False
     close_client_catalog(db)
     for i, f in file_targets:
-        print("ID: {}, File: {}".format(i,f))
+        #print("ID: {}, File: {}".format(i,f))
         restore_file(f, client, catalog, restore_path)
     return True
 
 
 
-client_id = "USER-PC-TEST"
-catalog_id = "SECOND-BACKUP"
-restore_file_name = 'C:\\Users\\Robert.Vasquez\\Documents\\Books\\CompSci\\rest_in_practice.pdf'
+client_id = "ROBERTPC"
+catalog_id = "010112345678"
+#client_id = "ROBERTPC"
+#catalog_id = "010112345678"
+#restore_file_name = 'C:\\Users\\Robert.Vasquez\\Documents\\Books\\CompSci\\rest_in_practice.pdf'
 restore_path = 'D:\\Restores'
 
 #restore_file(restore_file_name, client_id, catalog_id, restore_path)
 
-restore_folder('Acrobat Reader DC', client_id, catalog_id, restore_path)
+restore_folder("Enterprise_M806", client_id, catalog_id, restore_path)
