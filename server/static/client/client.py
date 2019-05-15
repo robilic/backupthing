@@ -11,12 +11,8 @@ BLOCK_SIZE = 4 * MB
 CLIENT_NAME = 'ROBERTPC'
 CATALOG_NAME = '010112345678'
 
-#SERVER_ADDRESS = 'http://A-IS-ROBERTV:8080'
-SERVER_ADDRESS = 'http://127.0.0.1:8080'
-#SERVER_ADDRESS = 'http://httpbin.org'
-
-#client_id = socket.gethostname()
-#catalog_id = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+SERVER = '127.0.0.1'
+SERVER_ADDRESS = 'http://' + SERVER + ':' + '8080'
 
 # send single block function
 def send_block(block_data):
@@ -71,7 +67,6 @@ def send_file(f, needed_blocks):
     return 'OK'
 
 
-#file_names = ['100K', '10K', '11MB', '120MB', '1KB', '1MB', '250K', '2MB', '30MB', '333K', '5MB', '768K', '7MB']
 notallowed = ['.git', 'cache', 'recycle.bin', '.vscode', 'c:\\windows', '.config', '.pyc']
 
 for dirpath, dirnames, filenames in os.walk(os.getcwd()):
