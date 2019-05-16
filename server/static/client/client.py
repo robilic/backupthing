@@ -18,8 +18,8 @@ SERVER_ADDRESS = 'http://' + SERVER + ':' + '8080'
 def send_block(block_data):
     h = hashlib.md5()
     h.update(block_data)
-    print('send_block(): hash: ' + h.hexdigest())
-    print('block head: ' + block_data[0:20].hex())
+    #print('send_block(): hash: ' + h.hexdigest())
+    #print('block head: ' + block_data[0:20].hex())
     r = requests.post(SERVER_ADDRESS + '/store/', data = { 'hash': h.hexdigest() }, files={ 'file': ('data', block_data) })
     return r
 
