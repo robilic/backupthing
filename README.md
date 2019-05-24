@@ -1,9 +1,6 @@
 # BackupThing
 
-Backup and restore tool. Very loosely based on a talk Dropbox gave. It stores files, split into blocks of length BLOCK_SIZE (currently 4MB), and keeps catalogs of each clients backup jobs.
-
-![File Layout](/images/dropboxfileformat1.png)
-
+Backup and restore tool.
 
 ### Running a Backup
 
@@ -17,7 +14,11 @@ Usage:
 
 ## How it works
 
-There is an  HTTP server whic has two methods:
+Very loosely based on a talk Dropbox gave. It stores files, split into blocks of length BLOCK_SIZE (currently 4MB), and keeps catalogs of each clients backup jobs.
+
+![File Layout](/images/dropboxfileformat1.png)
+
+There is an  HTTP server which has two methods:
 
 ### /COMMIT
 
