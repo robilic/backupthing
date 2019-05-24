@@ -2,6 +2,7 @@
 import os
 import sqlite3
 import re
+import sys
 
 DB_FILE_EXTENSION = '.db'
 CATALOG_BASE_PATH = 'D:\\Backups\\CATALOGS'
@@ -147,13 +148,6 @@ def restore_file(filename, client, catalog, restore_path):
         out_file_name = split_path[-1] # get the file name
         del split_path[-1] # remove it from the path
         full_restore_path = os.path.join(restore_path, *split_path) # re-assemble the path
-        
-#        print("Passed filename: " + filename)
-#        print("Path chunks: ")
-#        print(split_path)
-#        print("Restore path: " + restore_path)
-#        print("Full restore path: " + full_restore_path)
-#        print("Output file name: " + out_file_name)
 
         if not os.path.exists(full_restore_path):
             os.makedirs(full_restore_path) # create the new path
@@ -181,24 +175,40 @@ def restore_folder(foldername, client, catalog, restore_path):
     cursor.execute(''' SELECT blocklist_id, filename FROM catalog WHERE filename LIKE ? ''', ('%' + foldername + '%',))
     file_targets = cursor.fetchall()
     print("Rowcount = " + str(cursor.rowcount))
-#    if cursor.rowcount < 1:
-#        print("Folder '{}' not found".format(foldername,))
-#        return False
     close_client_catalog(db)
     for i, f in file_targets:
         #print("ID: {}, File: {}".format(i,f))
         restore_file(f, client, catalog, restore_path)
     return True
 
+def getopts(argv):
+    # collect command-line options into dictionary
+    opts = {}
+    while argv:
+        if argv[0][0] == '-': # find "-name value" pairs
+            opts[argv[0]] = argv[1] # dict key is "-name" arg
+            argv = argv[2:]
+        else:
+            argv = argv[1:]
+    return opts
 
 
-client_id = "ROBERTPC"
-catalog_id = "010112345678"
+
 #client_id = "ROBERTPC"
 #catalog_id = "010112345678"
-#restore_file_name = 'C:\\Users\\Robert.Vasquez\\Documents\\Books\\CompSci\\rest_in_practice.pdf'
-restore_path = 'D:\\Restores'
+#restore_path = 'D:\\Restores'
 
-#restore_file(restore_file_name, client_id, catalog_id, restore_path)
+args = getopts(sys.argv)
 
-restore_folder("Enterprise_M806", client_id, catalog_id, restore_path)
+if len(args) != 4:
+    print("\nInvalid arguments passed.\n")
+    print("USAGE:\n")
+    print("  python restore.py -client JeffB-laptop -catalog Dec2019Backup -restoreto F:\Documents -match Iventory.xlsx")
+    exit()
+
+match = args['-match']
+client_id = args['-client']
+catalog_id = args['-catalog']
+restore_path = args['-restoreto']
+
+restore_folder(match, client_id, catalog_id, restore_path)
