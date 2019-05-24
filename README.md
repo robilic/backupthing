@@ -4,6 +4,19 @@ Backup and restore tool. Very loosely based on a talk Dropbox gave. It stores fi
 
 ![File Layout](/images/dropboxfileformat1.png)
 
+
+### Running a Backup
+
+Use either client.py, or the VB client (Windows only)
+
+### Restore Script
+
+Usage:
+
+*python restore.py -client JeffB-laptop -catalog Dec2019Backup -restoreto F:\Documents -match Iventory.xlsx*
+
+## How it works
+
 There is an  HTTP server whic has two methods:
 
 ### /COMMIT
