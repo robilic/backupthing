@@ -14,6 +14,7 @@ DB_FILE_EXTENSION = '.db'
 CATALOG_BASE_PATH = 'D:\\Backups\\CATALOGS'
 FILES_BASE_PATH = 'D:\\Backups\\FILES'
 FILES_DIR_LAYERS = 4
+WEB_INTERFACE_PORT = 8080
 
 KB = 1024
 MB = 1024 * KB
@@ -388,4 +389,4 @@ def store():
 		return 'ERROR - hashes do not match'
 
 # use the paste webserver as the basic one will cause strange errors
-run(server='paste', host='0.0.0.0', port=8080, reloader=True, debug=True)
+run(server='paste', host='0.0.0.0', port=WEB_INTERFACE_PORT, reloader=True, debug=True)
