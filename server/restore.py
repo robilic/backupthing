@@ -104,7 +104,7 @@ def md5_hash_file_upload(fobj):
 		# let's do a real error capture/log here
 		return "ERROR"
 
-def get_blocklist_id(filename, client, catalog):
+def get_blocklist_id(filename, client_id, catalog_id):
     db = open_client_catalog(client_id, catalog_id)
     cursor = db.cursor()
     cursor.execute(''' SELECT blocklist_id FROM catalog WHERE filename = ? ''', (filename,))
@@ -115,15 +115,15 @@ def get_blocklist_id(filename, client, catalog):
         close_client_catalog(db)
         return blocklist_id[0]
 
-def get_hashes_for_block(blockid):
+def get_hashes_for_block(block_id, client_id, catalog_id):
     db = open_client_catalog(client_id, catalog_id)
     cursor = db.cursor()
-    cursor.execute(''' SELECT series, md5 FROM blocklist WHERE blocklist_id = ? ORDER BY series ASC''', (blockid,))
+    cursor.execute(''' SELECT series, md5 FROM blocklist WHERE blocklist_id = ? ORDER BY series ASC''', (block_id,))
     hashes = cursor.fetchall()
     close_client_catalog(db)
     return hashes
 
-def restore_file(filename, client, catalog, restore_path):
+def restore_file(filename, client_id, catalog_id, restore_path):
     id = get_blocklist_id(filename, client_id, catalog_id)
     if id is False:
         print("File '{}' not found.".format(filename,))
@@ -131,7 +131,7 @@ def restore_file(filename, client, catalog, restore_path):
     else:
         print("Blocklist ID: " + str(id))
 
-        hashes = get_hashes_for_block(id)
+        hashes = get_hashes_for_block(id, client_id, catalog_id)
         print("Hashes: ")
         for i, h in hashes:
             print("Index: {}, Hash: {}, File: {}".format(i,h, file_path_from_hash(h)))
@@ -167,7 +167,7 @@ def restore_file(filename, client, catalog, restore_path):
         out_file.close()
         # close file
 
-def restore_folder(foldername, client, catalog, restore_path):
+def restore_folder(foldername, client_id, catalog_id, restore_path):
     # restore a whole folder
     # pass something like: 'C:\Users\JoeSmith\Documents' to this function
     db = open_client_catalog(client_id, catalog_id)
@@ -198,17 +198,21 @@ def getopts(argv):
 #catalog_id = "010112345678"
 #restore_path = 'D:\\Restores'
 
-args = getopts(sys.argv)
+def main():
+    args = getopts(sys.argv)
 
-if len(args) != 4:
-    print("\nInvalid arguments passed.\n")
-    print("USAGE:\n")
-    print("  python restore.py -client JeffB-laptop -catalog Dec2019Backup -restoreto F:\Documents -match Iventory.xlsx")
-    exit()
+    if len(args) != 4:
+        print("\nInvalid arguments passed.\n")
+        print("USAGE:\n")
+        print("  python restore.py -client JeffB-laptop -catalog Dec2019Backup -restoreto F:\Documents -match Iventory.xlsx")
+        exit()
 
-match = args['-match']
-client_id = args['-client']
-catalog_id = args['-catalog']
-restore_path = args['-restoreto']
+    match = args['-match']
+    client_id_arg = args['-client']
+    catalog_id_arg = args['-catalog']
+    restore_path = args['-restoreto']
 
-restore_folder(match, client_id, catalog_id, restore_path)
+    restore_folder(match, client_id_arg, catalog_id_arg, restore_path)
+
+if __name__ == '__main__':
+    main()
