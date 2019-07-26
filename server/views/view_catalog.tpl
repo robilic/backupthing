@@ -15,9 +15,10 @@
     %if file_list is None:
       <pre>I have no catalogs for this client.</pre>
     %else:
-      <tr><th>File Name</th><th>Modified</th><th>Size</th><th>Blocklist ID</th></tr>
+      <tr><th></th><th>File Name</th><th>Modified</th><th>Size</th><th>Blocklist ID</th></tr>
       %for f in file_list:
         <tr>
+          <td><a href='/restore_file/{{ client_id }}/{{ catalog_id }}/{{ f[4] }}'><img src='/static/img/download_icon.png'></img></a></td>
           <td>{{ f[0] }}</td>
           <td>{{ datetime.datetime.fromtimestamp(f[1]).strftime('%a, %b %d, %Y %I:%M%p') }}</td>
           <td>{{ humanfriendly.format_size(f[2]) }}</td>
