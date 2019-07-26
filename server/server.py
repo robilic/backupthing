@@ -1,5 +1,5 @@
 import bottle
-from bottle import route, run, template, get, post, request, static_file
+from bottle import route, run, template, get, post, request, static_file, redirect
 from pathlib import Path
 import restore as Restore
 import os
@@ -129,6 +129,11 @@ def img(filepath):
 def js(filepath):
     return static_file(filepath, root="static/js")
 
+@get("/serve/<filepath:path>")
+def serve(filepath):
+	print("serve()")
+	print(filepath)
+	return static_file(filepath, root=RESTORE_BASE_PATH, download=True)
 #
 # Web Interface
 #
@@ -390,6 +395,7 @@ def store():
 		print("ERROR - hashes do not match.\nUploaded file: " + uploaded_file_hash + "\nSubmitted hash: " + submitted_hash)
 		return 'ERROR - hashes do not match'
 
+# restore specified file to the server
 @get('/restore_file/<client_id>/<catalog_id>/<id>', name='restore_file')
 def restore_file(client_id, catalog_id, id):
 	print('restoring file', id)
@@ -414,7 +420,7 @@ def restore_file(client_id, catalog_id, id):
 	print(restore_file_name, client_id, catalog_id, RESTORE_BASE_PATH)
 
 	Restore.restore_file(restore_file_name, client_id, catalog_id, os.path.join(RESTORE_BASE_PATH, client_id))
-	return 'restoring file: ' + id
+	redirect("/serve/" + client_id + restore_file_name)
 # def restore_file(filename, client, catalog, restore_path):
 
 # use the paste webserver as the basic one will cause strange errors

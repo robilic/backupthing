@@ -123,6 +123,17 @@ def get_hashes_for_block(block_id, client_id, catalog_id):
     close_client_catalog(db)
     return hashes
 
+def strip_drive_letter(filename):
+    # chop off the drive letter if it exists
+    if re.search('^[A-Za-z]:', filename):
+        # this is a windows path
+        filename = filename[3:] # remove drive letter
+        split_path = filename.split('\\')
+    else:
+        split_path = filename.split('/')
+        # this is a linux path
+    return split_path
+
 def restore_file(filename, client_id, catalog_id, restore_path):
     id = get_blocklist_id(filename, client_id, catalog_id)
     if id is False:
@@ -135,16 +146,8 @@ def restore_file(filename, client_id, catalog_id, restore_path):
         print("Hashes: ")
         for i, h in hashes:
             print("Index: {}, Hash: {}, File: {}".format(i,h, file_path_from_hash(h)))
-
-        # chop off the drive letter if it exists
-        if re.search('^[A-Za-z]:', filename):
-            # this is a windows path
-            filename = filename[3:] # remove drive letter
-            split_path = filename.split('\\')
-        else:
-            split_path = filename.split('/')
-            # this is a linux path
-
+        
+        split_path = strip_drive_letter(filename)
         out_file_name = split_path[-1] # get the file name
         del split_path[-1] # remove it from the path
         full_restore_path = os.path.join(restore_path, *split_path) # re-assemble the path
