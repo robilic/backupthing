@@ -1,6 +1,7 @@
 import bottle
 from bottle import route, run, template, get, post, request, static_file
 from pathlib import Path
+import restore as Restore
 import os
 import paste
 import hashlib
@@ -12,6 +13,7 @@ import base64
 
 DB_FILE_EXTENSION = '.db'
 CATALOG_BASE_PATH = 'D:\\Backups\\CATALOGS'
+RESTORE_BASE_PATH = 'D:\\Backups\\RESTORES'
 FILES_BASE_PATH = 'D:\\Backups\\FILES'
 FILES_DIR_LAYERS = 4
 WEB_INTERFACE_PORT = 8080
@@ -155,7 +157,7 @@ def view_client(client_id):
 def view_client_catalog(client_id, catalog_id):
     db = open_client_catalog(client_id, catalog_id)
     cursor = db.cursor()
-    cursor.execute(''' SELECT filename, mtime, size, blocklist_id FROM catalog LIMIT 1000 ''')
+    cursor.execute(''' SELECT filename, mtime, size, blocklist_id, id FROM catalog LIMIT 1000 ''')
     file_list = cursor.fetchall()
     close_client_catalog(db)
     return template('view_catalog.tpl', client_id=client_id, catalog_id=catalog_id, file_list=file_list)
@@ -387,6 +389,33 @@ def store():
 	else:
 		print("ERROR - hashes do not match.\nUploaded file: " + uploaded_file_hash + "\nSubmitted hash: " + submitted_hash)
 		return 'ERROR - hashes do not match'
+
+@get('/restore_file/<client_id>/<catalog_id>/<id>', name='restore_file')
+def restore_file(client_id, catalog_id, id):
+	print('restoring file', id)
+	catalog_db = open_client_catalog(client_id, catalog_id)
+	cur = catalog_db.cursor()
+
+	cur.execute('''
+		SELECT filename from catalog WHERE id = :id
+	''',
+		{ 'id': id }
+	)
+	rst = cur.fetchone()
+	if rst is None:
+		print('file not found')
+		return 'OK'
+	# write this file info to catalog
+	restore_file_name = rst[0]
+	print('found file:', restore_file_name)
+	print('---')
+	close_client_catalog(catalog_db)
+
+	print(restore_file_name, client_id, catalog_id, RESTORE_BASE_PATH)
+
+	Restore.restore_file(restore_file_name, client_id, catalog_id, os.path.join(RESTORE_BASE_PATH, client_id))
+	return 'restoring file: ' + id
+# def restore_file(filename, client, catalog, restore_path):
 
 # use the paste webserver as the basic one will cause strange errors
 run(server='paste', host='0.0.0.0', port=WEB_INTERFACE_PORT, reloader=True, debug=True)
